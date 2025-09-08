@@ -1,0 +1,28 @@
+import axios from 'axios';
+
+// 백엔드 API의 기본 URL을 설정합니다.
+// Controller의 @RequestMapping("/api/messages")에 해당합니다.
+const API_URL = 'http://localhost:8080/api/messages';
+
+class GuestbookService {
+  /**
+   * 모든 방명록 메시지를 가져옵니다.
+   * GET /api/messages
+   */
+  getMessages() {
+    return axios.get(API_URL);
+  }
+
+  /**
+   * 새로운 방명록 메시지를 생성합니다.
+   * POST /api/messages
+   * @param {{ author: string, message: string }} message - 생성할 메시지 데이터
+   */
+  createMessage(message) {
+    return axios.post(API_URL, message, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+}
+
+export default new GuestbookService();
