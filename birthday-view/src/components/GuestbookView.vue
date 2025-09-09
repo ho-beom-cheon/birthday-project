@@ -30,6 +30,11 @@
             <span class="timestamp">{{ formatTimestamp(message.createdAt) }}</span>
           </div>
           <p class="card-body">{{ message.message }}</p>
+          <div class="card-footer">
+            <button @click="likeMessage(message)" class="like-button" :title="`${message.likes || 0}명이 좋아합니다`">
+              ❤️ <span class="like-count">{{ message.likes || 0 }}</span>
+            </button>
+          </div>
         </div>
       </transition-group>
     </div>
@@ -90,6 +95,21 @@ const addMessage = async () => {
   }
 };
 
+const likeMessage = async (messageToLike) => {
+  try {
+    const response = await guestbookService.likeMessage(messageToLike.id);
+    // 서버로부터 받은 최신 정보로 메시지 업데이트
+    const index = messages.value.findIndex(m => m.id === messageToLike.id);
+    if (index !== -1) {
+      // Vue의 반응성을 위해 likes 속성을 직접 수정합니다.
+      messages.value[index].likes = response.data.likes;
+    }
+  } catch (error) {
+    console.error('좋아요를 추가하는 데 실패했습니다:', error);
+    alert('좋아요 처리에 실패했습니다. 잠시 후 다시 시도해주세요.');
+  }
+};
+
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return '';
   return new Date(timestamp).toLocaleString('ko-KR');
@@ -104,7 +124,7 @@ onMounted(() => {
 .guestbook-layout {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
   width: 100%;
   max-width: 900px;
 }
@@ -126,8 +146,8 @@ onMounted(() => {
   margin-bottom: 1rem;
   background: linear-gradient(
     -45deg,
-    #00c6ff,
-    #0072ff,
+    #e8f8a0,
+    #ec82ec,
     #f09,
     #ff007f
   );
@@ -148,7 +168,7 @@ h3 {
   display: inline-block;
   margin-bottom: 2.5rem;
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(45deg, #00aaff, #007bff);
+  background: linear-gradient(45deg, #d387dd, #e962b1);
   color: white;
   text-decoration: none;
   font-weight: bold;
@@ -158,7 +178,7 @@ h3 {
 .main-link:hover {
   transform: translateY(-3px);
   box-shadow: 0 6px 15px rgba(0, 170, 255, 0.3);
-  background: linear-gradient(45deg, #1abfff, #1a8cff);
+  background: linear-gradient(45deg, #e962b1, #f726d4);
 }
 .guestbook-form {
   display: flex;
@@ -191,7 +211,7 @@ input, textarea {
 }
 input:focus, textarea:focus {
   outline: none;
-  border-color: #00aaff;
+  border-color: #eb8dc3;
   box-shadow: 0 0 0 3px rgba(0, 170, 255, 0.3);
 }
 textarea {
@@ -200,7 +220,7 @@ textarea {
 }
 button[type="submit"] {
   padding: 1rem;
-  background: #00aaff;
+  background: linear-gradient(45deg, #d387dd, #e962b1);
   color: white;
   border: none;
   border-radius: 12px;
@@ -212,7 +232,7 @@ button[type="submit"] {
   width: 200px;
 }
 button[type="submit"]:hover {
-  background: #007bff;
+  background: linear-gradient(45deg, #e962b1, #f726d4);
   transform: translateY(-3px);
   box-shadow: 0 6px 15px rgba(0, 170, 255, 0.3);
 }
@@ -224,7 +244,7 @@ button[type="submit"]:hover {
 }
 .sort-buttons button {
   background: transparent;
-  border: 1px solid #00aaff;
+  border: 1px solid #fa36c9;
   color: #00aaff;
   padding: 0.5rem 1rem;
   border-radius: 8px;
@@ -237,11 +257,11 @@ button[type="submit"]:hover {
   background: rgba(0, 170, 255, 0.1);
 }
 .sort-buttons button.active {
-  background: #00aaff;
+  background: #f876cd;
   color: white;
 }
 .messages-list-container {
-  padding: 2rem;
+  padding: 1.5rem;
   background-color: rgba(255, 255, 255, 0.7);
   border-radius: 16px;
   box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
@@ -253,7 +273,7 @@ button[type="submit"]:hover {
 .messages-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
+  gap: 1rem;
   margin-top: 1.5rem;
 }
 .message-card {
@@ -263,7 +283,7 @@ button[type="submit"]:hover {
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  border-left: 5px solid #00aaff;
+  border-left: 5px solid #f31e93;
   gap: 1rem;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   text-align: left;
@@ -280,7 +300,7 @@ button[type="submit"]:hover {
   padding-bottom: 0.75rem;
 }
 .card-header strong {
-  color: #00aaff;
+  color: #f371c8;
   font-size: 1.1rem;
 }
 .timestamp {
@@ -291,6 +311,38 @@ button[type="submit"]:hover {
   color: #555;
   line-height: 1.6;
   margin: 0;
+}
+
+.card-footer {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.like-button {
+  background-color: #fff0f5;
+  border: 1px solid #ffc0cb;
+  color: #db7093; /* PaleVioletRed */
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.like-button:hover, .like-button:focus {
+  background-color: #ffdde5;
+  transform: scale(1.05);
+  outline: none;
+}
+.like-count {
+  font-weight: bold;
 }
 
 .card-list-enter-active,
@@ -315,6 +367,33 @@ button[type="submit"]:hover {
   }
   100% {
     background-position: 0% 50%;
+  }
+}
+
+@media (max-width: 768px) {
+  .guestbook-layout {
+    gap: 1.5rem;
+  }
+  .guestbook-container,
+  .messages-list-container {
+    padding: 1.5rem 1rem;
+  }
+  .birthday-title {
+    font-size: 3rem;
+  }
+  .main-link {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+    margin-bottom: 2rem;
+  }
+  .guestbook-form {
+    gap: 1rem;
+  }
+  button[type="submit"] {
+    width: 100%;
+  }
+  .messages-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

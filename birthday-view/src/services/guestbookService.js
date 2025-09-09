@@ -23,6 +23,15 @@ class GuestbookService {
       headers: { 'Content-Type': 'application/json' }
     });
   }
+
+  /**
+   * 방명록 메시지에 좋아요를 추가합니다.
+   * POST /api/messages/{id}/like
+   * @param {number} id - 좋아요를 누를 메시지의 ID
+   */
+  likeMessage(id) {
+    return axios.post(`${API_URL}/${id}/like`);
+  }
 }
 
 export default new GuestbookService();

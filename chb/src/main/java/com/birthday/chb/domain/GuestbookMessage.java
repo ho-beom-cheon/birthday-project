@@ -25,6 +25,8 @@ public class GuestbookMessage {
     @Lob
     private String message;
 
+    private int likes;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

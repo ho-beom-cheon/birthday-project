@@ -28,4 +28,12 @@ public class GuestbookService {
     public GuestbookMessageDto.Response saveMessage(GuestbookMessageDto.Request requestDto) {
         return new GuestbookMessageDto.Response(repository.save(requestDto.toEntity()));
     }
+
+    @Transactional
+    public GuestbookMessage likeMessage(Long id) {
+        GuestbookMessage message = repository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid message Id:" + id));
+        message.setLikes(message.getLikes() + 1);
+        return repository.save(message);
+    }
 }

@@ -15,11 +15,13 @@ public class GuestbookMessageDto {
     public static class Request {
         private String author;
         private String message;
+        private int likes;
 
         public GuestbookMessage toEntity() {
             GuestbookMessage guestbookMessage = new GuestbookMessage();
             guestbookMessage.setAuthor(this.author);
             guestbookMessage.setMessage(this.message);
+            guestbookMessage.setLikes(this.likes);
             return guestbookMessage;
         }
     }
@@ -29,12 +31,14 @@ public class GuestbookMessageDto {
         private final Long id;
         private final String author;
         private final String message;
+        private final int likes;
         private final LocalDateTime createdAt;
 
         public Response(GuestbookMessage guestbookMessage) {
             this.id = guestbookMessage.getId();
             this.author = guestbookMessage.getAuthor();
             this.message = guestbookMessage.getMessage();
+            this.likes = guestbookMessage.getLikes();
             this.createdAt = guestbookMessage.getCreatedAt();
         }
     }
