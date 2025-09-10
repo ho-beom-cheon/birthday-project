@@ -18,6 +18,10 @@ public class SecurityConfig {
             // stateless API(세션이 없는)에서는 보통 비활성화합니다.
             .csrf(csrf -> csrf.disable())
 
+            // 세션을 사용하지 않도록 설정합니다. (stateless)
+            // REST API 서버에 적합한 설정입니다.
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
             // HTTP 요청에 대한 접근 권한을 설정합니다.
             .authorizeHttpRequests(authz -> authz
                 // "/api/**" 패턴의 URL에 대한 요청은 인증 없이 모두 허용합니다.

@@ -30,10 +30,10 @@ public class GuestbookService {
     }
 
     @Transactional
-    public GuestbookMessage likeMessage(Long id) {
+    public GuestbookMessageDto.Response likeMessage(Long id) {
         GuestbookMessage message = repository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid message Id:" + id));
         message.setLikes(message.getLikes() + 1);
-        return repository.save(message);
+        return new GuestbookMessageDto.Response(repository.save(message));
     }
 }

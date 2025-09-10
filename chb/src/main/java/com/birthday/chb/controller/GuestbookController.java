@@ -8,7 +8,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/messages")
-@CrossOrigin(origins = "http://localhost:5173") // Vue 개발 서버 포트
 public class GuestbookController {
 
     private final GuestbookService service;
@@ -29,7 +28,7 @@ public class GuestbookController {
 
      // 좋아요 API 엔드포인트 추가
     @PostMapping("/{id}/like")
-    public GuestbookMessage likeMessage(@PathVariable Long id) {
+    public GuestbookMessageDto.Response likeMessage(@PathVariable Long id) {
         return service.likeMessage(id);
     }
 }
