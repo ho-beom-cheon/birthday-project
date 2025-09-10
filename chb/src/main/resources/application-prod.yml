@@ -10,6 +10,11 @@ spring:
     # 실행 시 -Djasypt.encryptor.password="암호키" 옵션을 추가해야 합니다.
     password: cJS414GHQJA!
     #ENC(DBbW82vE2M3YIq1mBAqR46xpVlwazGCu)
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 30000
+      connection-timeout: 30000
   jpa:
     hibernate:
       ddl-auto: validate # 운영 시에는 스키마 검증만
