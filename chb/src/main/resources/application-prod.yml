@@ -14,3 +14,7 @@ spring:
     hibernate:
       ddl-auto: validate # 운영 시에는 스키마 검증만
     show-sql: false # SQL 쿼리 로그 출력 안함
+    
+logging:
+  level:
+    root: DEBUG
