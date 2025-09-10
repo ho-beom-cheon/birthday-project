@@ -4,7 +4,7 @@ server:
 spring:
   datasource:
     # 운영용 Oracle DB 연결 URL. TNS_ADMIN 경로는 실행 시 외부에서 주입합니다.
-    url: jdbc:oracle:thin:@proddb1_high?TNS_ADMIN=/home/ubuntu/Wallet_PRODDB1
+    url: jdbc:oracle:thin:@proddb1_high
     username: ADMIN
     # [보안 개선] Jasypt로 암호화된 비밀번호를 사용합니다.
     # 실행 시 -Djasypt.encryptor.password="암호키" 옵션을 추가해야 합니다.
@@ -14,7 +14,7 @@ spring:
     hibernate:
       ddl-auto: validate # 운영 시에는 스키마 검증만
     show-sql: false # SQL 쿼리 로그 출력 안함
-    
+
 logging:
   level:
     root: DEBUG
