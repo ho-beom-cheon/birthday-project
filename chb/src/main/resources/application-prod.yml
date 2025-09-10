@@ -4,7 +4,7 @@ server:
 spring:
   datasource:
     # 운영용 Oracle DB 연결 URL. TNS_ADMIN 경로는 실행 시 외부에서 주입합니다.
-    url: jdbc:oracle:thin:@(description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.ap-chuncheon-1.oraclecloud.com))(connect_data=(service_name=gd90d7eb818b186_proddb1_high.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
+    url: "jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=tcps)(HOST=proddb1.oraclecloud.com)(PORT=1522))(CONNECT_DATA=(SERVICE_NAME=proddb1_high))(SECURITY=(MY_WALLET_DIRECTORY=/home/ubuntu/Wallet_PRODDB1)))"
     username: ADMIN
     # [보안 개선] Jasypt로 암호화된 비밀번호를 사용합니다.
     # 실행 시 -Djasypt.encryptor.password="암호키" 옵션을 추가해야 합니다.
