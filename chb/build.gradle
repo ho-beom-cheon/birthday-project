@@ -36,9 +36,6 @@ configurations.all {
     resolutionStrategy {
         // 모든 Oracle 관련 라이브러리의 버전을 23.3.0.23.09로 강제합니다.
         force 'com.oracle.database.jdbc:ojdbc11:23.3.0.23.09'
-        force 'com.oracle.database.security:oraclepki:23.3.0.23.09'
-        force 'com.oracle.database.security:osdt_cert:23.3.0.23.09'
-        force 'com.oracle.database.security:osdt_core:23.3.0.23.09'
     }
 }
 
@@ -51,9 +48,6 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
     implementation 'com.oracle.database.jdbc:ojdbc11:23.3.0.23.09'
-    implementation 'com.oracle.database.security:oraclepki:23.3.0.23.09'
-    implementation 'com.oracle.database.security:osdt_cert:23.3.0.23.09'
-    implementation 'com.oracle.database.security:osdt_core:23.3.0.23.09'
 	implementation 'com.github.ulisesbocchio:jasypt-spring-boot-starter:3.0.5'
 
 	implementation files('libs/oraclepki.jar')
@@ -61,6 +55,13 @@ dependencies {
     implementation files('libs/osdt_cert.jar')
 	implementation fileTree(dir: 'libs', include: ['*.jar'])
 }
+
+bootJar {
+    from('libs') {
+        include '*.jar'
+    }
+}
+
 
 tasks.named('test') {
 	useJUnitPlatform()
