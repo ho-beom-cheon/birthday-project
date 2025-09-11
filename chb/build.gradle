@@ -34,6 +34,10 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	implementation 'com.oracle.database.jdbc:ojdbc11:23.3.0.23.09'
 	implementation 'com.github.ulisesbocchio:jasypt-spring-boot-starter:3.0.5'
+
+	implementation files('libs/oraclepki.jar')
+    implementation files('libs/osdt_core.jar')
+    implementation files('libs/osdt_cert.jar')
 }
 
 tasks.named('test') {
