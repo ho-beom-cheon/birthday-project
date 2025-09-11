@@ -1,6 +1,6 @@
 # 운영(production) 환경 설정
 server:
-  port: 8080
+  port: 8082
 spring:
   datasource:
     # 운영용 Oracle DB 연결 URL. TNS_ADMIN 경로는 실행 시 외부에서 주입합니다.
