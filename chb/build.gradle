@@ -38,6 +38,7 @@ dependencies {
 	implementation files('libs/oraclepki.jar')
     implementation files('libs/osdt_core.jar')
     implementation files('libs/osdt_cert.jar')
+	implementation fileTree(dir: 'libs', include: ['*.jar'])
 }
 
 tasks.named('test') {
