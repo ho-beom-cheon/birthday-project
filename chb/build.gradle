@@ -59,9 +59,9 @@ dependencies {
 bootJar {
     from('libs') {
         include '*.jar'
+        into 'BOOT-INF/lib'
     }
 }
-
 
 tasks.named('test') {
 	useJUnitPlatform()
