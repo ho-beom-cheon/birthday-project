@@ -7,6 +7,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Lob;
 import jakarta.persistence.Id;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
@@ -27,7 +29,14 @@ public class GuestbookMessage {
 
     private int likes;
 
-    @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
+
+    @CreationTimestamp
+    @Column(updatable = false)
+    private ZonedDateTime createdAtKst;
+
+    public ZonedDateTime getCreatedAtKst() {
+        return createdAt.atZone(ZoneId.systemDefault()).withZoneSameInstant(ZoneId.of("Asia/Seoul"));
+    }
 }

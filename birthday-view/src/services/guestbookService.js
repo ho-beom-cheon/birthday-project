@@ -1,8 +1,6 @@
 import axios from 'axios';
-
-// 백엔드 API의 기본 URL을 설정합니다.
-// Controller의 @RequestMapping("/api/messages")에 해당합니다.
-const API_URL = 'http://localhost:8080/api/messages';
+const API_BASE = import.meta.env.VITE_API_BASE;
+const API_URL = `${API_BASE}/messages`;
 
 class GuestbookService {
   /**
