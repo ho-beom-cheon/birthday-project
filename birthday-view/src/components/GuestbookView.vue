@@ -33,6 +33,7 @@
             <strong>{{ message.author }}</strong>
             <div class="header-controls">
               <span class="timestamp">{{ formatTimestamp(message.createdAt) }}</span>
+              <button @click="editMessage(message)" class="edit-button" title="수정하기">✏️</button>
               <button @click="deleteMessage(message.id)" class="delete-button" title="삭제하기">×</button>
             </div>
           </div>
@@ -142,6 +143,40 @@ const deleteMessage = async (id) => {
     }
   }
 };
+
+const editMessage = async (message) => {
+  const newMessage = prompt('새로운 메시지를 입력하세요:', message.message);
+  // 사용자가 취소했거나, 내용을 비웠을 경우 중단
+  if (newMessage === null || newMessage.trim() === '') {
+    return;
+  }
+
+  const password = prompt('수정을 위해 비밀번호를 입력하세요.');
+  if (password === null) { // 사용자가 '취소'를 누른 경우
+    return;
+  }
+
+  try {
+    const response = await guestbookService.updateMessage(message.id, {
+      message: newMessage,
+      password: password
+    });
+    // API 호출 성공 시, 로컬 데이터도 업데이트하여 화면에 즉시 반영
+    const index = messages.value.findIndex(m => m.id === message.id);
+    if (index !== -1) {
+      messages.value[index] = response.data;
+    }
+  } catch (error) {
+    console.error('메시지를 수정하는 데 실패했습니다:', error);
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+      alert('비밀번호가 일치하지 않습니다.');
+    } else {
+      alert('메시지 수정에 실패했습니다. 다시 시도해주세요.');
+    }
+  }
+};
+
+
 
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return '';
@@ -346,7 +381,7 @@ button[type="submit"]:hover {
 .header-controls {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.5rem;
 }
 .card-header strong {
   color: #f371c8;
@@ -392,6 +427,22 @@ button[type="submit"]:hover {
 }
 .like-count {
   font-weight: bold;
+}
+
+.edit-button {
+  background: transparent;
+  border: none;
+  color: #ccc;
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 0 0.25rem;
+  line-height: 1;
+  transition: color 0.2s ease;
+  vertical-align: middle;
+}
+
+.edit-button:hover {
+  color: #4CAF50; /* Green for edit action */
 }
 
 .delete-button {

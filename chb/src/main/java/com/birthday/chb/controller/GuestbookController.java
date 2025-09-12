@@ -38,7 +38,7 @@ public class GuestbookController {
         return service.likeMessage(id);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id}/delete")
     public ResponseEntity<Void> deleteMessage(@PathVariable Long id, @RequestBody GuestbookMessageDto.DeleteRequest requestDto) {
         try {
             service.deleteMessage(id, requestDto.getPassword());
@@ -52,4 +52,18 @@ public class GuestbookController {
         }
     }
     
+    // 아래 메소드를 GuestbookMessageController 클래스 내부에 추가하세요.
+    @PutMapping("/{id}/update")
+    public ResponseEntity<GuestbookMessageDto.Response> updateMessage(@PathVariable Long id, @RequestBody GuestbookMessageDto.UpdateRequest requestDto) {
+        try {
+            GuestbookMessageDto.Response updatedMessage = service.updateMessage(id, requestDto);
+            return ResponseEntity.ok(updatedMessage);
+        } catch (IllegalArgumentException e) {
+            // 비밀번호 불일치 시 401 Unauthorized 응답
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        } catch (EntityNotFoundException e) {
+            // 메시지가 없을 시 404 Not Found 응답
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

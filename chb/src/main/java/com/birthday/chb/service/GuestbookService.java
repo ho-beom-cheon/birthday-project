@@ -42,6 +42,21 @@ public class GuestbookService {
     }
 
     @Transactional
+    public GuestbookMessageDto.Response updateMessage(Long id, GuestbookMessageDto.UpdateRequest requestDto) {
+        GuestbookMessage message = repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("ID " + id + "에 해당하는 메시지를 찾을 수 없습니다."));
+
+        // 비밀번호를 확인합니다. 실제 운영에서는 암호화된 비밀번호를 비교해야 합니다.
+        if (message.getPassword() == null || !message.getPassword().equals(requestDto.getPassword())) {
+            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+        }
+
+        message.setMessage(requestDto.getMessage());
+        GuestbookMessage updatedMessage = repository.save(message);
+        return new GuestbookMessageDto.Response(updatedMessage);
+    }
+
+    @Transactional
     public void deleteMessage(Long id, String password) {
         // 메시지가 존재하는지 확인하고, 없으면 예외를 발생시킵니다.
         GuestbookMessage message = repository.findById(id)

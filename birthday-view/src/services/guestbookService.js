@@ -33,9 +33,13 @@ class GuestbookService {
   // ID와 비밀번호 데이터를 받아 DELETE 요청을 보냅니다.
   deleteMessage(id, data) {
     // axios.delete의 두 번째 인자로 { data: ... }를 전달하여 request body를 보냅니다.
-    return axios.delete(`${API_URL}/${id}`, { data: data });
+    return axios.delete(`${API_URL}/${id}/delete`, { data: data });
   }
 
+  // ID와 수정할 데이터(메시지, 비밀번호)를 받아 PUT 요청을 보냅니다.
+  updateMessage(id, data) {
+    return axios.put(`${API_URL}/${id}/update`, data);
+  };
 }
 
 export default new GuestbookService();

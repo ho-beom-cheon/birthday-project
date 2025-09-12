@@ -51,4 +51,12 @@ public class GuestbookMessageDto {
     public static class DeleteRequest {
         private String password;
     }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class UpdateRequest {
+        private String message;
+        private String password;
+    }
 }
