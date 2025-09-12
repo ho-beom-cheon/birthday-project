@@ -7,4 +7,4 @@ spring:
 
   jpa:
     # JPA/Hibernate settings for Oracle
-    database-platform: org.hibernate.dialect.OracleDialect
+    database-platform: org.hibernate.dialect.OracleDialect 
