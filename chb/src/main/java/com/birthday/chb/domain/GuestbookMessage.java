@@ -31,12 +31,4 @@ public class GuestbookMessage {
 
     @Column(updatable = false)
     private LocalDateTime createdAt;
-
-    @CreationTimestamp
-    @Column(updatable = false)
-    private ZonedDateTime createdAtKst;
-
-    public ZonedDateTime getCreatedAtKst() {
-        return createdAt.atZone(ZoneId.systemDefault()).withZoneSameInstant(ZoneId.of("Asia/Seoul"));
-    }
 }
