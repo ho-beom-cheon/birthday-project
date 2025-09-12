@@ -13,6 +13,10 @@
           <label for="message">축하 메시지:</label>
           <textarea id="message" v-model="newMessage" required placeholder="생일 축하 메시지를 남겨주세요!"></textarea>
         </div>
+        <div class="form-group">
+          <label for="password">비밀번호:</label>
+          <input id="password" v-model="newPassword" type="password" required placeholder="삭제 시 사용할 비밀번호">
+        </div>
         <button type="submit">남기기</button>
       </form>
     </div>
@@ -27,7 +31,10 @@
         <div v-for="message in sortedMessages" :key="message.id" class="message-card">
           <div class="card-header">
             <strong>{{ message.author }}</strong>
-            <span class="timestamp">{{ formatTimestamp(message.createdAt) }}</span>
+            <div class="header-controls">
+              <span class="timestamp">{{ formatTimestamp(message.createdAt) }}</span>
+              <button @click="deleteMessage(message.id)" class="delete-button" title="삭제하기">×</button>
+            </div>
           </div>
           <p class="card-body">{{ message.message }}</p>
           <div class="card-footer">
@@ -48,6 +55,7 @@ import guestbookService from '../services/guestbookService';
 const messages = ref([]);
 const newAuthor = ref('');
 const newMessage = ref('');
+const newPassword = ref('');
 const sortOrder = ref('desc'); // 'desc' for newest, 'asc' for oldest
 
 const fetchMessages = async () => {
@@ -77,17 +85,19 @@ const setSortOrder = (order) => {
 };
 
 const addMessage = async () => {
-  if (!newAuthor.value.trim() || !newMessage.value.trim()) {
-    alert('이름과 메시지를 모두 입력해주세요.');
+  if (!newAuthor.value.trim() || !newMessage.value.trim() || !newPassword.value.trim()) {
+    alert('이름, 메시지, 비밀번호를 모두 입력해주세요.');
     return;
   }
   try {
     await guestbookService.createMessage({
       author: newAuthor.value,
-      message: newMessage.value
+      message: newMessage.value,
+      password: newPassword.value
     });
     newAuthor.value = '';
     newMessage.value = '';
+    newPassword.value = '';
     await fetchMessages(); // 새 메시지 등록 후 목록 새로고침
   } catch (error) {
     console.error('메시지를 등록하는 데 실패했습니다:', error);
@@ -107,6 +117,29 @@ const likeMessage = async (messageToLike) => {
   } catch (error) {
     console.error('좋아요를 추가하는 데 실패했습니다:', error);
     alert('좋아요 처리에 실패했습니다. 잠시 후 다시 시도해주세요.');
+  }
+};
+
+const deleteMessage = async (id) => {
+  const password = prompt('메시지 삭제를 위해 비밀번호를 입력하세요.');
+  if (password === null) { // 사용자가 '취소'를 누른 경우
+    return;
+  }
+  if (!password) {
+    alert('비밀번호를 입력해야 합니다.');
+    return;
+  }
+  try {
+    await guestbookService.deleteMessage(id, { password });
+    // API 호출 성공 시, 화면에서도 해당 메시지를 즉시 제거합니다.
+    messages.value = messages.value.filter(m => m.id !== id);
+  } catch (error) {
+    console.error('메시지를 삭제하는 데 실패했습니다:', error);
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+      alert('비밀번호가 일치하지 않습니다.');
+    } else {
+      alert('메시지 삭제에 실패했습니다. 다시 시도해주세요.');
+    }
   }
 };
 
@@ -310,6 +343,11 @@ button[type="submit"]:hover {
   border-bottom: 1px solid #f0f0f0;
   padding-bottom: 0.75rem;
 }
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
 .card-header strong {
   color: #f371c8;
   font-size: 1.1rem;
@@ -354,6 +392,23 @@ button[type="submit"]:hover {
 }
 .like-count {
   font-weight: bold;
+}
+
+.delete-button {
+  background: transparent;
+  border: none;
+  color: #ccc;
+  cursor: pointer;
+  font-size: 1.5rem;
+  font-weight: bold;
+  padding: 0 0.25rem;
+  line-height: 1;
+  transition: color 0.2s ease;
+  vertical-align: middle;
+}
+
+.delete-button:hover {
+  color: #ff4d4d; /* A reddish color for delete action */
 }
 
 .card-list-enter-active,

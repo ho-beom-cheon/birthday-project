@@ -1,7 +1,6 @@
 import axios from 'axios';
 const API_BASE = import.meta.env.VITE_API_BASE;
 const API_URL = `${API_BASE}/messages`;
-
 class GuestbookService {
   /**
    * 모든 방명록 메시지를 가져옵니다.
@@ -30,6 +29,13 @@ class GuestbookService {
   likeMessage(id) {
     return axios.post(`${API_URL}/${id}/like`);
   }
+  
+  // ID와 비밀번호 데이터를 받아 DELETE 요청을 보냅니다.
+  deleteMessage(id, data) {
+    // axios.delete의 두 번째 인자로 { data: ... }를 전달하여 request body를 보냅니다.
+    return axios.delete(`${API_URL}/${id}`, { data: data });
+  }
+
 }
 
 export default new GuestbookService();

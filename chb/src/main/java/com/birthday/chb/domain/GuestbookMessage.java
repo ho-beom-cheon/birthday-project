@@ -7,11 +7,10 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Lob;
 import jakarta.persistence.Id;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import org.hibernate.annotations.CreationTimestamp;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
+
 
 @Entity
 @Getter
@@ -29,6 +28,9 @@ public class GuestbookMessage {
 
     private int likes;
 
+    @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
+
+    private String password;
 }

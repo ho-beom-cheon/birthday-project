@@ -1,9 +1,15 @@
 package com.birthday.chb.controller;
 
 import com.birthday.chb.service.GuestbookService;
+
+import jakarta.persistence.EntityNotFoundException;
+
 import com.birthday.chb.domain.GuestbookMessage;
 import com.birthday.chb.dto.GuestbookMessageDto;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+
 import java.util.List;
 
 @RestController
@@ -31,4 +37,19 @@ public class GuestbookController {
     public GuestbookMessageDto.Response likeMessage(@PathVariable Long id) {
         return service.likeMessage(id);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteMessage(@PathVariable Long id, @RequestBody GuestbookMessageDto.DeleteRequest requestDto) {
+        try {
+            service.deleteMessage(id, requestDto.getPassword());
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            // 비밀번호 불일치 시 401 Unauthorized 응답
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        } catch (EntityNotFoundException e) {
+            // 메시지가 없을 시 404 Not Found 응답
+            return ResponseEntity.notFound().build();
+        }
+    }
+    
 }

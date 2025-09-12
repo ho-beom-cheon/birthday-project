@@ -15,12 +15,14 @@ public class GuestbookMessageDto {
     public static class Request {
         private String author;
         private String message;
+        private String password;
         private int likes;
 
         public GuestbookMessage toEntity() {
             GuestbookMessage guestbookMessage = new GuestbookMessage();
             guestbookMessage.setAuthor(this.author);
             guestbookMessage.setMessage(this.message);
+            guestbookMessage.setPassword(this.password);
             guestbookMessage.setLikes(this.likes);
             return guestbookMessage;
         }
@@ -41,5 +43,12 @@ public class GuestbookMessageDto {
             this.likes = guestbookMessage.getLikes();
             this.createdAt = guestbookMessage.getCreatedAt();
         }
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class DeleteRequest {
+        private String password;
     }
 }
