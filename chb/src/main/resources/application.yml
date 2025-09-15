@@ -1,6 +1,8 @@
 spring:
   application:
     name: chb
+  # profiles:
+  #   active: dev   # dev 프로필을 기본값으로 설정
   datasource:
     # 4. Oracle JDBC 드라이버 클래스 이름
     driver-class-name: oracle.jdbc.OracleDriver

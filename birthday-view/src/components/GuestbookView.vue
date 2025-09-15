@@ -205,7 +205,7 @@ onMounted(() => {
   flex-direction: column;
   gap: 1.5rem;
   width: 100%;
-  max-width: 900px;
+  max-width: 600px;
 }
 .guestbook-container {
   padding: 2rem;
@@ -351,7 +351,7 @@ button[type="submit"]:hover {
 }
 .messages-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 1rem;
   margin-top: 1.5rem;
 }
