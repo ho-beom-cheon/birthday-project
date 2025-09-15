@@ -13,21 +13,20 @@
       <h2 class="section-title">Welcome!</h2>
       <p class="intro-text">
         해인이의 특별한 날을 축하하기 위해<br>
-        만들어진 작은 공간에 오신 것을 환영합니다!
+        만들어진 작은 공간에 오신 것을 환영합니다!<br>
         함께 즐거운 추억을 구경하고<br>
         따뜻한 축하 메시지도 남겨주세요.
       </p>
-    </div><br> 
-
-    <img :src="batuma" alt="Welcome Hamo" class="batuma-image">
-    <h1>퇴근 바투메요~!</h1><br>
+    </div><br>
+    <img :src="batuma" alt="batuma" class="batuma-image">
+    <h1>퇴근 바투메요~!</h1><br><br>
     <div class="section gallery-section">
       <h2 class="section-title">✨ Special Moments</h2>
       <div v-if="allPhotos.length === 0" class="no-photos-message">
         <p>아직 등록된 사진이 없어요. 😢</p>
       </div>
       <transition-group v-else name="photo-list" tag="div" class="photo-gallery">
-        <div v-for="photo in displayedPhotos" :key="photo.url" class="photo-item" @click="openModal(photo)">
+        <div v-for="photo in displayedPhotos" :key="photo.url" class="photo-item" @click="openModal(photo)" :style="{ '--aspect-ratio': '1/1' }">
           <img :src="photo.url" :alt="photo.alt" />
         </div>
       </transition-group>
@@ -55,13 +54,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, onUnmounted } from 'vue';
 import hamoCharacter from '../assets/image/hamo2.png';
-import batuma from '../assets/image/1000025663.png';
-import birthday from '../assets/image/birthday1.png';
+import batuma from '../assets/image/batuma2.png';
 
 const allPhotos = ref([]);
-const visibleCount = ref(4);
+const loadCount = ref(9);
+const visibleCount = ref(9);
 
 const displayedPhotos = computed(() => allPhotos.value.slice(0, visibleCount.value));
 const hasMorePhotos = computed(() => visibleCount.value < allPhotos.value.length);
@@ -100,7 +99,7 @@ const closeModal = () => {
 };
 
 const loadMorePhotos = () => {
-  visibleCount.value += 4;
+  visibleCount.value += loadCount.value;
 };
 
 const fireworksContainer = ref(null);
@@ -130,8 +129,26 @@ const launchFireworks = () => {
   }
 };
 
+const handleResize = () => {
+  if (window.innerWidth <= 768) {
+    loadCount.value = 4;
+  } else {
+    loadCount.value = 9;
+  }
+};
+
 onMounted(() => {
   fetchPhotos();
+
+  // 화면 크기에 따라 초기 사진 개수 설정
+  if (window.innerWidth <= 768) {
+    loadCount.value = 4;
+    visibleCount.value = 4;
+  } else {
+    loadCount.value = 9;
+    visibleCount.value = 9;
+  }
+  window.addEventListener('resize', handleResize);
 
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
@@ -148,6 +165,10 @@ onMounted(() => {
     observer.observe(section);
   });
 });
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize);
+});
 </script>
 
 <style scoped>
@@ -158,7 +179,7 @@ onMounted(() => {
   width: 100%;
   max-width: 480px;
   margin: 0 auto;
-  background: linear-gradient(135deg, #ffdee9 0%, #b5fffc 100%);
+  background: linear-gradient(to top, #fff1eb 0%, #ace0f9 100%);
   color: #333;
   overflow-x: hidden;
 }
@@ -166,7 +187,7 @@ onMounted(() => {
 .hero-section {
   position: relative;
   text-align: center;
-  padding: 2rem;
+  padding: 4rem 2rem 2rem;
   min-height: 90vh;
   display: flex;
   flex-direction: column;
@@ -175,12 +196,12 @@ onMounted(() => {
 }
 .hero-image {
   width: 70%;
-  border-radius: 25px;
-  box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+  border-radius: 20px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.15);
   border: 6px solid white;
-  transform: rotate(-6deg);
+  transform: rotate(-5deg);
   margin-top: 2rem;
-  transition: transform 0.5s ease;
+  transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 .hero-image:hover {
   transform: rotate(3deg) scale(1.05);
@@ -195,13 +216,11 @@ onMounted(() => {
   font-size: 4.8rem;
   font-weight: 900;
   color: #fff;
-  line-height: 1.1;
-  text-shadow: 4px 4px 0px #ff9a8b, 8px 8px 0px rgba(0,0,0,0.1);
+  line-height: 1;
+  text-shadow: 0px 4px 0px #ffc3a0, 0px 8px 10px rgba(0,0,0,0.1);
   margin: 0 0 1rem 0;
 }
 .hamo-character {
-  width: 120px;
-  margin: 0;
   width: 140px;
   margin-top: 1rem;
   cursor: pointer;
@@ -211,7 +230,7 @@ onMounted(() => {
   font-size: 1.6rem;
   color: #444;
   font-weight: 700;
-  margin: 1rem 0;
+  margin: 2rem 0;
   background-color: rgba(255, 255, 255, 0.7);
   padding: 0.5rem 1rem;
   border-radius: 10px;
@@ -234,8 +253,8 @@ onMounted(() => {
   padding: 3rem 1.5rem;
   margin: 0 1.5rem 3rem 1.5rem;
   text-align: center;
-  background-color: rgba(255, 255, 255, 0.6);
-  border-radius: 20px;
+  background-color: rgba(255, 255, 255, 0.7);
+  border-radius: 24px;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.3);
@@ -253,19 +272,9 @@ onMounted(() => {
   font-size: 2.4rem;
   font-weight: 700;
   margin-bottom: 2rem;
-  color: #ff7e5f;
+  color: #ff8a65;
   display: inline-block;
   position: relative;
-}
-.section-title::after {
-  content: '';
-  position: absolute;
-  bottom: -5px;
-  left: 0;
-  width: 100%;
-  height: 5px;
-  background-image: linear-gradient(to right, #feb47b, #ff7e5f);
-  border-radius: 5px;
 }
 
 .intro-text {
@@ -273,6 +282,8 @@ onMounted(() => {
   line-height: 1.8;
   color: #555;
   font-weight: 700;
+  max-width: 31ch;
+  margin: 0 auto;
 }
 
 .intro-image {
@@ -280,19 +291,16 @@ onMounted(() => {
   max-width: 250px;
   border-radius: 15px;
   box-shadow: 0 10px 20px rgba(0,0,0,0.15);
-  margin: 2rem auto;
+  margin: 1.5rem auto;
   display: block;
   border: 4px solid white;
 }
-
 .batuma-image {
-  width: 80%;
-  max-width: 350px;
+  width: 60%;
+  max-width: 300px;
   border-radius: 15px;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.15);
-  margin: 2rem auto;
+  margin: 1.5rem auto;
   display: block;
-  border: 4px solid white;
 }
 .load-more-container {
   text-align: center;
@@ -302,7 +310,7 @@ onMounted(() => {
 .load-more-button {
   display: inline-block;
   padding: 0.8rem 2rem;
-  background-image: linear-gradient(to right, #f590f0 0%, #f1889d 51%, #f5f5f7 100%);
+  background-image: linear-gradient(to right, #6a82fb 0%, #fc5c7d 51%, #6a82fb 100%);
   background-size: 200% auto;
   color: white;
   text-decoration: none;
@@ -324,7 +332,7 @@ onMounted(() => {
 
 .photo-gallery {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 15px;
 }
 
@@ -336,6 +344,7 @@ onMounted(() => {
   transform: translateY(20px);
 }
 .photo-item {
+  aspect-ratio: 1 / 1;
   border-radius: 15px;
   overflow: hidden;
   box-shadow: 0 5px 15px rgba(0,0,0,0.1);
@@ -362,7 +371,7 @@ onMounted(() => {
 }
 .guestbook-link {
   display: inline-block;
-  padding: 1rem 2.5rem;
+  padding: 1.2rem 3rem;
   background-image: linear-gradient(to right, #ff7e5f 0%, #feb47b 51%, #ff7e5f 100%);
   background-size: 200% auto;
   color: white;
@@ -462,7 +471,7 @@ onMounted(() => {
   100% { transform: translate(calc(var(--x) - 50%), calc(var(--y) - 50%)) scale(0); opacity: 0; }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .modal-content {
     max-width: 95vw;
     max-height: 85vh;
@@ -479,7 +488,6 @@ onMounted(() => {
     font-size: 1.2rem;
   }
   .hamo-character {
-    width: 100px;
     width: 110px;
   }
   .hero-image {
@@ -495,6 +503,10 @@ onMounted(() => {
   }
   .intro-text {
     font-size: 1.1rem;
+  }
+  .photo-gallery {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
   }
   .guestbook-link {
     font-size: 1.2rem;

@@ -28,10 +28,11 @@
         <button @click="setSortOrder('asc')" :class="{ active: sortOrder === 'asc' }">오래된순</button>
       </div>
       <transition-group name="card-list" tag="div" class="messages-grid">
-        <div v-for="message in sortedMessages" :key="message.id" class="message-card">
+        <div v-for="message in sortedMessages" :key="message.id" class="message-card" :class="{ pinned: message.id === pinnedMessageId }">
           <div class="card-header">
             <strong>{{ message.author }}</strong>
             <div class="header-controls">
+              <span v-if="message.id === pinnedMessageId" class="pinned-icon" title="가장 많은 좋아요를 받은 메시지입니다.">📌</span>
               <span class="timestamp">{{ formatTimestamp(message.modifiedAt || message.createdAt) }}</span>
               <span v-if="message.modifiedAt" class="edited-indicator" title="수정된 메시지입니다.">(수정)</span>
               <button @click="editMessage(message)" class="edit-button" title="수정하기">✏️</button>
@@ -70,16 +71,52 @@ const fetchMessages = async () => {
   }
 };
 
+const pinnedMessageId = computed(() => {
+  if (messages.value.length < 1) return null;
+
+  const topMessage = messages.value.reduce((top, current) => {
+    if (current.likes > top.likes) {
+      return current;
+    }
+    if (current.likes === top.likes) {
+      const topDate = new Date(top.modifiedAt || top.createdAt);
+      const currentDate = new Date(current.modifiedAt || current.createdAt);
+      return currentDate > topDate ? current : top;
+    }
+    return top;
+  });
+
+  return topMessage.likes > 0 ? topMessage.id : null;
+});
+
 const sortedMessages = computed(() => {
-  return [...messages.value].sort((a, b) => {
-    const dateA = new Date(a.createdAt);
-    const dateB = new Date(b.createdAt);
+  const messagesCopy = [...messages.value];
+  const pinnedId = pinnedMessageId.value;
+  let pinnedMessage = null;
+  let otherMessages = messagesCopy;
+
+  if (pinnedId) {
+    pinnedMessage = messagesCopy.find(m => m.id === pinnedId);
+    otherMessages = messagesCopy.filter(m => m.id !== pinnedId);
+  }
+
+  otherMessages.sort((a, b) => {
     if (sortOrder.value === 'asc') {
-      return dateA - dateB; // Oldest first
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+      return dateA - dateB; // 오래된순
     } else {
-      return dateB - dateA; // Newest first
+      const dateA = new Date(a.modifiedAt || a.createdAt);
+      const dateB = new Date(b.modifiedAt || b.createdAt);
+      return dateB - dateA; // 최신순
     }
   });
+
+  if (pinnedMessage) {
+    return [pinnedMessage, ...otherMessages];
+  }
+
+  return otherMessages;
 });
 
 const setSortOrder = (order) => {
@@ -372,6 +409,11 @@ button[type="submit"]:hover {
   transform: translateY(-8px);
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
 }
+.message-card.pinned {
+  border-left-color: #ffd700; /* Gold color for pinned */
+  box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3);
+}
+
 .card-header {
   display: flex;
   justify-content: space-between;
@@ -396,6 +438,7 @@ button[type="submit"]:hover {
   color: #555;
   line-height: 1.6;
   margin: 0;
+  white-space: pre-wrap;
 }
 
 .card-footer {
@@ -469,6 +512,13 @@ button[type="submit"]:hover {
   margin-left: 4px;
 }
 
+.pinned-icon {
+  font-size: 1.2rem;
+  margin-right: 0.5rem;
+  color: #ffc107;
+  animation: bounce-pin 1.5s infinite;
+}
+
 .card-list-enter-active,
 .card-list-leave-active {
   transition: all 0.5s ease;
@@ -480,6 +530,15 @@ button[type="submit"]:hover {
 }
 .card-list-move {
   transition: transform 0.5s ease;
+}
+
+@keyframes bounce-pin {
+  0%, 100% {
+    transform: translateY(0) rotate(0);
+  }
+  50% {
+    transform: translateY(-5px) rotate(10deg);
+  }
 }
 
 @keyframes gradient-flow {
