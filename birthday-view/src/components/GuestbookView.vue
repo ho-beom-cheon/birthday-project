@@ -32,7 +32,8 @@
           <div class="card-header">
             <strong>{{ message.author }}</strong>
             <div class="header-controls">
-              <span class="timestamp">{{ formatTimestamp(message.createdAt) }}</span>
+              <span class="timestamp">{{ formatTimestamp(message.modifiedAt || message.createdAt) }}</span>
+              <span v-if="message.modifiedAt" class="edited-indicator" title="수정된 메시지입니다.">(수정)</span>
               <button @click="editMessage(message)" class="edit-button" title="수정하기">✏️</button>
               <button @click="deleteMessage(message.id)" class="delete-button" title="삭제하기">×</button>
             </div>
@@ -460,6 +461,12 @@ button[type="submit"]:hover {
 
 .delete-button:hover {
   color: #ff4d4d; /* A reddish color for delete action */
+}
+
+.edited-indicator {
+  font-size: 0.8rem;
+  color: #999;
+  margin-left: 4px;
 }
 
 .card-list-enter-active,

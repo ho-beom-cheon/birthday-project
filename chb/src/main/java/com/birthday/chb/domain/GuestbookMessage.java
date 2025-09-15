@@ -8,6 +8,7 @@ import jakarta.persistence.Lob;
 import jakarta.persistence.Id;
 import java.time.LocalDateTime;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -31,6 +32,9 @@ public class GuestbookMessage {
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime modifiedAt;
 
     private String password;
 }

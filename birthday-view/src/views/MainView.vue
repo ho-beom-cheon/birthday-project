@@ -1,7 +1,7 @@
 <template>
   <div class="birthday-container">
     <div class="hero-section">
-      <img :src="photos[0]?.url" alt="Main Photo" class="hero-image" v-if="photos.length > 0">
+      <img :src="allPhotos[0]?.url" alt="Main Photo" class="hero-image" v-if="allPhotos.length > 0">
       <div class="hero-text">
         <h1 class="title">HAPPY<br>BIRTHDAY!</h1>
         <p class="subtitle">우리 막내 해인이의 생일을 축하합니다 🥳</p>
@@ -13,21 +13,26 @@
       <h2 class="section-title">Welcome!</h2>
       <p class="intro-text">
         해인이의 특별한 날을 축하하기 위해<br>
-        만들어진 작은 공간에 오신 것을 환영합니다!<br><br>
+        만들어진 작은 공간에 오신 것을 환영합니다!
         함께 즐거운 추억을 구경하고<br>
         따뜻한 축하 메시지도 남겨주세요.
       </p>
-    </div>
+    </div><br> 
 
+    <img :src="batuma" alt="Welcome Hamo" class="batuma-image">
+    <h1>퇴근 바투메요~!</h1><br>
     <div class="section gallery-section">
       <h2 class="section-title">✨ Special Moments</h2>
-      <div class="photo-gallery">
-        <div v-if="photos.length === 0" class="no-photos-message">
-          <p>아직 등록된 사진이 없어요. 😢</p>
-        </div>
-        <div v-else v-for="(photo, index) in photos" :key="index" class="photo-item" @click="openModal(photo)">
+      <div v-if="allPhotos.length === 0" class="no-photos-message">
+        <p>아직 등록된 사진이 없어요. 😢</p>
+      </div>
+      <transition-group v-else name="photo-list" tag="div" class="photo-gallery">
+        <div v-for="photo in displayedPhotos" :key="photo.url" class="photo-item" @click="openModal(photo)">
           <img :src="photo.url" :alt="photo.alt" />
         </div>
+      </transition-group>
+      <div v-if="hasMorePhotos" class="load-more-container">
+        <button @click="loadMorePhotos" class="load-more-button">더보기</button>
       </div>
     </div>
 
@@ -50,17 +55,39 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import hamoCharacter from '../assets/image/hamo.png';
+import { ref, onMounted, computed } from 'vue';
+import hamoCharacter from '../assets/image/hamo2.png';
+import batuma from '../assets/image/1000025663.png';
+import birthday from '../assets/image/birthday1.png';
 
-const photos = ref([
-  { url: 'https://hobeom.notion.site/image/attachment%3Aab6a9bb6-bfc5-4817-aae3-7a03b881b650%3A1000017715.jpg?table=block&id=269d6f5e-9d0f-806a-8283-d4fc07a09495&spaceId=50f558a5-a0b2-4ff7-8175-baff46955343&width=600&userId=&cache=v2', alt: '첫 번째 사진' },
-  { url: 'https://hobeom.notion.site/image/attachment%3A2cbad23f-3c30-453d-861b-ece5e8e32096%3A1000029208.png?table=block&id=269d6f5e-9d0f-80dd-932e-f59957599cdb&spaceId=50f558a5-a0b2-4ff7-8175-baff46955343&width=600&userId=&cache=v2', alt: '두 번째 사진' },
-  { url: 'https://hobeom.notion.site/image/attachment%3Aed6e2273-fb24-45df-a14b-2265c2cd604e%3A1000019428.jpg?table=block&id=269d6f5e-9d0f-8074-854d-e135628c149c&spaceId=50f558a5-a0b2-4ff7-8175-baff46955343&width=600&userId=&cache=v2', alt: '세 번째 사진' },
-  { url: 'https://hobeom.notion.site/image/attachment%3Af71079a9-bce2-43c2-904c-231660e44d21%3A1000029779.jpg?table=block&id=269d6f5e-9d0f-80f3-aadb-ffa4c879e863&spaceId=50f558a5-a0b2-4ff7-8175-baff46955343&width=720&userId=&cache=v2', alt: '네 번째 사진' },
-  // 더 많은 사진을 여기에 추가할 수 있습니다.
-  // { url: photo5, alt: '다섯 번째 사진' },
-]);
+const allPhotos = ref([]);
+const visibleCount = ref(4);
+
+const displayedPhotos = computed(() => allPhotos.value.slice(0, visibleCount.value));
+const hasMorePhotos = computed(() => visibleCount.value < allPhotos.value.length);
+
+const shuffleArray = (array) => {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+};
+
+const fetchPhotos = async () => {
+  try {
+    // 캐시를 방지하기 위해 타임스탬프를 쿼리 파라미터로 추가합니다.
+    const response = await fetch(`/photos.json?t=${new Date().getTime()}`);
+    if (!response.ok) {
+      throw new Error('사진 데이터를 불러오는 데 실패했습니다.');
+    }
+    const data = await response.json();
+    allPhotos.value = shuffleArray(data);
+  } catch (error) {
+    console.error(error);
+    // 사용자에게 오류 메시지를 보여주는 로직을 추가할 수 있습니다.
+  }
+};
 
 const selectedPhoto = ref(null);
 
@@ -70,6 +97,10 @@ const openModal = (photo) => {
 
 const closeModal = () => {
   selectedPhoto.value = null;
+};
+
+const loadMorePhotos = () => {
+  visibleCount.value += 4;
 };
 
 const fireworksContainer = ref(null);
@@ -100,6 +131,8 @@ const launchFireworks = () => {
 };
 
 onMounted(() => {
+  fetchPhotos();
+
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
@@ -123,7 +156,7 @@ onMounted(() => {
 .birthday-container {
   font-family: 'Gaegu', cursive;
   width: 100%;
-  max-width: 600px;
+  max-width: 480px;
   margin: 0 auto;
   background: linear-gradient(135deg, #ffdee9 0%, #b5fffc 100%);
   color: #333;
@@ -169,6 +202,8 @@ onMounted(() => {
 .hamo-character {
   width: 120px;
   margin: 0;
+  width: 140px;
+  margin-top: 1rem;
   cursor: pointer;
   animation: bounce 2.5s infinite;
 }
@@ -240,10 +275,65 @@ onMounted(() => {
   font-weight: 700;
 }
 
+.intro-image {
+  width: 60%;
+  max-width: 250px;
+  border-radius: 15px;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+  margin: 2rem auto;
+  display: block;
+  border: 4px solid white;
+}
+
+.batuma-image {
+  width: 80%;
+  max-width: 350px;
+  border-radius: 15px;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+  margin: 2rem auto;
+  display: block;
+  border: 4px solid white;
+}
+.load-more-container {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.load-more-button {
+  display: inline-block;
+  padding: 0.8rem 2rem;
+  background-image: linear-gradient(to right, #f590f0 0%, #f1889d 51%, #f5f5f7 100%);
+  background-size: 200% auto;
+  color: white;
+  text-decoration: none;
+  border: none;
+  border-radius: 50px;
+  font-family: 'Gaegu', cursive;
+  font-size: 1.2rem;
+  font-weight: bold;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  transition: all 0.4s ease;
+  cursor: pointer;
+}
+
+.load-more-button:hover {
+  background-position: right center;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
 .photo-gallery {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 15px;
+}
+
+.photo-list-enter-active {
+  transition: all 0.5s ease;
+}
+.photo-list-enter-from {
+  opacity: 0;
+  transform: translateY(20px);
 }
 .photo-item {
   border-radius: 15px;
@@ -390,6 +480,7 @@ onMounted(() => {
   }
   .hamo-character {
     width: 100px;
+    width: 110px;
   }
   .hero-image {
     width: 80%;

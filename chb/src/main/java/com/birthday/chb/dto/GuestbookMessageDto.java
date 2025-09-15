@@ -35,6 +35,7 @@ public class GuestbookMessageDto {
         private final String message;
         private final int likes;
         private final LocalDateTime createdAt;
+        private final LocalDateTime modifiedAt;
 
         public Response(GuestbookMessage guestbookMessage) {
             this.id = guestbookMessage.getId();
@@ -42,6 +43,7 @@ public class GuestbookMessageDto {
             this.message = guestbookMessage.getMessage();
             this.likes = guestbookMessage.getLikes();
             this.createdAt = guestbookMessage.getCreatedAt();
+            this.modifiedAt = guestbookMessage.getModifiedAt();
         }
     }
 
