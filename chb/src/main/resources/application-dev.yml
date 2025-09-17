@@ -1,0 +1,11 @@
+# 개발(development) 환경 설정
+spring:
+  datasource:
+    # 개발용 Oracle DB 연결 URL
+    url: jdbc:oracle:thin:@//localhost:1521/XEPDB1
+    username: loan_user
+    password: loan1234
+  jpa:
+    hibernate:
+      ddl-auto: update # 개발 시에는 스키마 자동 업데이트
+    show-sql: true # SQL 쿼리 로그 출력

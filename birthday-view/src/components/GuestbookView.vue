@@ -34,7 +34,6 @@
             <div class="header-controls">
               <span v-if="message.id === pinnedMessageId" class="pinned-icon" title="가장 많은 좋아요를 받은 메시지입니다.">📌</span>
               <span class="timestamp">{{ formatTimestamp(message.modifiedAt || message.createdAt) }}</span>
-              <span v-if="message.modifiedAt" class="edited-indicator" title="수정된 메시지입니다.">(수정)</span>
               <button @click="editMessage(message)" class="edit-button" title="수정하기">✏️</button>
               <button @click="deleteMessage(message.id)" class="delete-button" title="삭제하기">×</button>
             </div>
@@ -48,6 +47,31 @@
         </div>
       </transition-group>
     </div>
+
+    <!-- Action Modal -->
+    <transition name="modal-fade">
+      <div v-if="isModalOpen" class="modal-overlay" @click="closeModal">
+        <div class="modal-content" @click.stop>
+          <h3 v-if="modalAction === 'edit'">메시지 수정</h3>
+          <h3 v-if="modalAction === 'delete'">메시지 삭제</h3>
+          
+          <div class="form-group" v-if="modalAction === 'edit'">
+            <label for="edit-message">메시지:</label>
+            <textarea id="edit-message" v-model="editedMessage" required></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label for="modal-password">비밀번호:</label>
+            <input id="modal-password" type="password" v-model="inputPassword" @keyup.enter="handleModalConfirm" required placeholder="비밀번호를 입력하세요">
+          </div>
+          
+          <div class="modal-buttons">
+            <button @click="handleModalConfirm" class="modal-confirm-button">확인</button>
+            <button @click="closeModal" class="modal-cancel-button">취소</button>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -60,6 +84,13 @@ const newAuthor = ref('');
 const newMessage = ref('');
 const newPassword = ref('');
 const sortOrder = ref('desc'); // 'desc' for newest, 'asc' for oldest
+
+// Modal state
+const isModalOpen = ref(false);
+const modalAction = ref(''); // 'edit' or 'delete'
+const currentMessage = ref(null);
+const inputPassword = ref('');
+const editedMessage = ref('');
 
 const fetchMessages = async () => {
   try {
@@ -101,15 +132,14 @@ const sortedMessages = computed(() => {
   }
 
   otherMessages.sort((a, b) => {
-    if (sortOrder.value === 'asc') {
-      const dateA = new Date(a.createdAt);
-      const dateB = new Date(b.createdAt);
-      return dateA - dateB; // 오래된순
-    } else {
-      const dateA = new Date(a.modifiedAt || a.createdAt);
-      const dateB = new Date(b.modifiedAt || b.createdAt);
-      return dateB - dateA; // 최신순
-    }
+    // '최신순' 정렬 시에는 수정된 시각을, '오래된순' 정렬 시에는 생성 시각을 기준으로 정렬합니다.
+    const effectiveDateA = sortOrder.value === 'desc' ? (a.modifiedAt || a.createdAt) : a.createdAt;
+    const effectiveDateB = sortOrder.value === 'desc' ? (b.modifiedAt || b.createdAt) : b.createdAt;
+
+    const dateA = new Date(effectiveDateA);
+    const dateB = new Date(effectiveDateB);
+
+    return sortOrder.value === 'asc' ? dateA - dateB : dateB - dateA;
   });
 
   if (pinnedMessage) {
@@ -159,62 +189,73 @@ const likeMessage = async (messageToLike) => {
   }
 };
 
-const deleteMessage = async (id) => {
-  const password = prompt('메시지 삭제를 위해 비밀번호를 입력하세요.');
-  if (password === null) { // 사용자가 '취소'를 누른 경우
-    return;
-  }
-  if (!password) {
+const deleteMessage = (id) => {
+  currentMessage.value = { id };
+  modalAction.value = 'delete';
+  inputPassword.value = '';
+  isModalOpen.value = true;
+};
+
+const editMessage = (message) => {
+  currentMessage.value = message;
+  modalAction.value = 'edit';
+  editedMessage.value = message.message;
+  inputPassword.value = '';
+  isModalOpen.value = true;
+};
+
+const closeModal = () => {
+  isModalOpen.value = false;
+  inputPassword.value = '';
+  editedMessage.value = '';
+  currentMessage.value = null;
+  modalAction.value = '';
+};
+
+const handleModalConfirm = async () => {
+  if (!inputPassword.value) {
     alert('비밀번호를 입력해야 합니다.');
     return;
   }
-  try {
-    await guestbookService.deleteMessage(id, { password });
-    // API 호출 성공 시, 화면에서도 해당 메시지를 즉시 제거합니다.
-    messages.value = messages.value.filter(m => m.id !== id);
-  } catch (error) {
-    console.error('메시지를 삭제하는 데 실패했습니다:', error);
-    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-      alert('비밀번호가 일치하지 않습니다.');
-    } else {
-      alert('메시지 삭제에 실패했습니다. 다시 시도해주세요.');
+
+  if (modalAction.value === 'edit') {
+    if (!editedMessage.value.trim()) {
+      alert('메시지를 입력해주세요.');
+      return;
+    }
+    try {
+      const response = await guestbookService.updateMessage(currentMessage.value.id, {
+        message: editedMessage.value,
+        password: inputPassword.value
+      });
+      const index = messages.value.findIndex(m => m.id === currentMessage.value.id);
+      if (index !== -1) {
+        messages.value[index] = response.data;
+      }
+      closeModal();
+    } catch (error) {
+      console.error('메시지를 수정하는 데 실패했습니다:', error);
+      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+        alert('비밀번호가 일치하지 않습니다.');
+      } else {
+        alert('메시지 수정에 실패했습니다. 다시 시도해주세요.');
+      }
+    }
+  } else if (modalAction.value === 'delete') {
+    try {
+      await guestbookService.deleteMessage(currentMessage.value.id, { password: inputPassword.value });
+      messages.value = messages.value.filter(m => m.id !== currentMessage.value.id);
+      closeModal();
+    } catch (error) {
+      console.error('메시지를 삭제하는 데 실패했습니다:', error);
+      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+        alert('비밀번호가 일치하지 않습니다.');
+      } else {
+        alert('메시지 삭제에 실패했습니다. 다시 시도해주세요.');
+      }
     }
   }
 };
-
-const editMessage = async (message) => {
-  const newMessage = prompt('새로운 메시지를 입력하세요:', message.message);
-  // 사용자가 취소했거나, 내용을 비웠을 경우 중단
-  if (newMessage === null || newMessage.trim() === '') {
-    return;
-  }
-
-  const password = prompt('수정을 위해 비밀번호를 입력하세요.');
-  if (password === null) { // 사용자가 '취소'를 누른 경우
-    return;
-  }
-
-  try {
-    const response = await guestbookService.updateMessage(message.id, {
-      message: newMessage,
-      password: password
-    });
-    // API 호출 성공 시, 로컬 데이터도 업데이트하여 화면에 즉시 반영
-    const index = messages.value.findIndex(m => m.id === message.id);
-    if (index !== -1) {
-      messages.value[index] = response.data;
-    }
-  } catch (error) {
-    console.error('메시지를 수정하는 데 실패했습니다:', error);
-    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-      alert('비밀번호가 일치하지 않습니다.');
-    } else {
-      alert('메시지 수정에 실패했습니다. 다시 시도해주세요.');
-    }
-  }
-};
-
-
 
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return '';
@@ -425,20 +466,27 @@ button[type="submit"]:hover {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-shrink: 0; /* 컨트롤이 줄어들지 않도록 설정 */
 }
 .card-header strong {
   color: #f371c8;
   font-size: 1.1rem;
+  /* 긴 이름이 레이아웃을 깨지 않도록 설정 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .timestamp {
   font-size: 0.8rem;
   color: #999;
+  white-space: nowrap; /* 날짜가 줄바꿈되지 않도록 설정 */
 }
 .card-body {
   color: #555;
   line-height: 1.6;
   margin: 0;
   white-space: pre-wrap;
+  overflow-wrap: break-word; /* 긴 단어가 레이아웃을 깨지 않도록 줄바꿈 처리 */
 }
 
 .card-footer {
@@ -506,12 +554,6 @@ button[type="submit"]:hover {
   color: #ff4d4d; /* A reddish color for delete action */
 }
 
-.edited-indicator {
-  font-size: 0.8rem;
-  color: #999;
-  margin-left: 4px;
-}
-
 .pinned-icon {
   font-size: 1.2rem;
   margin-right: 0.5rem;
@@ -530,6 +572,91 @@ button[type="submit"]:hover {
 }
 .card-list-move {
   transition: transform 0.5s ease;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.modal-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 450px;
+}
+
+.modal-content h3 {
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 2rem;
+  color: #e962b1;
+  font-size: 1.5rem;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.modal-buttons button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: bold;
+  font-family: inherit;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.modal-confirm-button {
+  background: linear-gradient(45deg, #d387dd, #e962b1);
+  color: white;
+}
+.modal-confirm-button:hover {
+  transform: translateY(-2px);
+}
+
+.modal-cancel-button {
+  background-color: #f0f0f0;
+  color: #555;
+}
+.modal-cancel-button:hover {
+  background-color: #e0e0e0;
+}
+
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+.modal-fade-enter-active .modal-content,
+.modal-fade-leave-active .modal-content {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+.modal-fade-enter-from .modal-content,
+.modal-fade-leave-to .modal-content {
+  transform: scale(0.95) translateY(10px);
+  opacity: 0;
 }
 
 @keyframes bounce-pin {
