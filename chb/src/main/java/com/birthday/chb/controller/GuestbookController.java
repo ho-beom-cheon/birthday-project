@@ -4,7 +4,6 @@ import com.birthday.chb.service.GuestbookService;
 
 import jakarta.persistence.EntityNotFoundException;
 
-import com.birthday.chb.domain.GuestbookMessage;
 import com.birthday.chb.dto.GuestbookMessageDto;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
@@ -34,12 +33,12 @@ public class GuestbookController {
 
      // 좋아요 API 엔드포인트 추가
     @PostMapping("/{id}/like")
-    public GuestbookMessageDto.Response likeMessage(@PathVariable Long id) {
+    public GuestbookMessageDto.Response likeMessage(@PathVariable("id") Long id) {
         return service.likeMessage(id);
     }
 
     @DeleteMapping("/{id}/delete")
-    public ResponseEntity<Void> deleteMessage(@PathVariable Long id, @RequestBody GuestbookMessageDto.DeleteRequest requestDto) {
+    public ResponseEntity<Void> deleteMessage(@PathVariable("id") Long id, @RequestBody GuestbookMessageDto.DeleteRequest requestDto) {
         try {
             service.deleteMessage(id, requestDto.getPassword());
             return ResponseEntity.noContent().build();
@@ -54,7 +53,7 @@ public class GuestbookController {
     
     // 아래 메소드를 GuestbookMessageController 클래스 내부에 추가하세요.
     @PutMapping("/{id}/update")
-    public ResponseEntity<GuestbookMessageDto.Response> updateMessage(@PathVariable Long id, @RequestBody GuestbookMessageDto.UpdateRequest requestDto) {
+    public ResponseEntity<GuestbookMessageDto.Response> updateMessage(@PathVariable("id") Long id, @RequestBody GuestbookMessageDto.UpdateRequest requestDto) {
         try {
             GuestbookMessageDto.Response updatedMessage = service.updateMessage(id, requestDto);
             return ResponseEntity.ok(updatedMessage);

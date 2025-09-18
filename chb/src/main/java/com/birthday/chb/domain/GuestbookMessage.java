@@ -4,8 +4,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
-import jakarta.persistence.Lob;
 import jakarta.persistence.Id;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -24,7 +24,8 @@ public class GuestbookMessage {
 
     private String author;
 
-    @Lob
+    @Column(length = 300)
+    @Size(max = 300, message = "메시지는 300자를 초과할 수 없습니다.")
     private String message;
 
     private int likes;

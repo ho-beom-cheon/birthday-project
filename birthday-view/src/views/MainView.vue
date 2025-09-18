@@ -42,9 +42,11 @@
     <!-- 사진 크게 보기 모달 -->
     <transition name="modal-fade">
       <div v-if="selectedPhoto" class="modal-overlay" @click="closeModal">
+        <button class="modal-nav-button prev" @click.stop="showPrevPhoto">‹</button>
         <div class="modal-content" @click.stop>
           <img :src="selectedPhoto.url" :alt="selectedPhoto.alt" />
         </div>
+        <button class="modal-nav-button next" @click.stop="showNextPhoto">›</button>
         <button class="close-button" @click="closeModal">&times;</button>
       </div>
     </transition>
@@ -89,13 +91,41 @@ const fetchPhotos = async () => {
 };
 
 const selectedPhoto = ref(null);
+const selectedPhotoIndex = ref(null);
 
 const openModal = (photo) => {
-  selectedPhoto.value = photo;
+  // 전체 사진 목록에서 인덱스를 찾습니다.
+  const index = allPhotos.value.findIndex(p => p.url === photo.url);
+  if (index !== -1) {
+    selectedPhotoIndex.value = index;
+    selectedPhoto.value = allPhotos.value[index];
+  }
 };
 
 const closeModal = () => {
   selectedPhoto.value = null;
+  selectedPhotoIndex.value = null;
+};
+
+const showNextPhoto = () => {
+  if (selectedPhotoIndex.value === null || allPhotos.value.length === 0) return;
+  const newIndex = (selectedPhotoIndex.value + 1) % allPhotos.value.length;
+  selectedPhotoIndex.value = newIndex;
+  selectedPhoto.value = allPhotos.value[newIndex];
+};
+
+const showPrevPhoto = () => {
+  if (selectedPhotoIndex.value === null || allPhotos.value.length === 0) return;
+  const newIndex = (selectedPhotoIndex.value - 1 + allPhotos.value.length) % allPhotos.value.length;
+  selectedPhotoIndex.value = newIndex;
+  selectedPhoto.value = allPhotos.value[newIndex];
+};
+
+const handleKeydown = (e) => {
+  if (!selectedPhoto.value) return;
+  if (e.key === 'ArrowRight') showNextPhoto();
+  else if (e.key === 'ArrowLeft') showPrevPhoto();
+  else if (e.key === 'Escape') closeModal();
 };
 
 const loadMorePhotos = () => {
@@ -149,6 +179,7 @@ onMounted(() => {
     visibleCount.value = 9;
   }
   window.addEventListener('resize', handleResize);
+  window.addEventListener('keydown', handleKeydown);
 
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
@@ -168,6 +199,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
+  window.removeEventListener('keydown', handleKeydown);
 });
 </script>
 
@@ -430,6 +462,32 @@ onUnmounted(() => {
   text-shadow: 0 2px 5px rgba(0,0,0,0.5);
 }
 
+.modal-nav-button {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(0, 0, 0, 0.3);
+  color: white;
+  border: none;
+  font-size: 3rem;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 1001;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: background-color 0.2s;
+}
+.modal-nav-button:hover {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+.modal-nav-button.prev { left: 20px; }
+.modal-nav-button.next { right: 20px; }
+
 .modal-fade-enter-active,
 .modal-fade-leave-active {
   transition: opacity 0.3s ease;
@@ -512,5 +570,12 @@ onUnmounted(() => {
     font-size: 1.2rem;
     padding: 0.8rem 2rem;
   }
+  .modal-nav-button {
+    width: 45px;
+    height: 45px;
+    font-size: 2rem;
+  }
+  .modal-nav-button.prev { left: 10px; }
+  .modal-nav-button.next { right: 10px; }
 }
 </style>

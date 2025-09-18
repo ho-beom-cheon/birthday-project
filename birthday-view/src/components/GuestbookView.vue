@@ -11,7 +11,8 @@
         </div>
         <div class="form-group">
           <label for="message">축하 메시지:</label>
-          <textarea id="message" v-model="newMessage" required placeholder="생일 축하 메시지를 남겨주세요!"></textarea>
+          <textarea id="message" v-model="newMessage" required placeholder="생일 축하 메시지를 남겨주세요!" maxlength="300"></textarea>
+          <div class="char-counter">{{ newMessage.length }} / 300</div>
         </div>
         <div class="form-group">
           <label for="password">비밀번호:</label>
@@ -23,29 +24,46 @@
 
     <div class="messages-list-container">
       <h3>남겨진 축하 메시지</h3>
-      <div class="sort-buttons">
-        <button @click="setSortOrder('desc')" :class="{ active: sortOrder === 'desc' }">최신순</button>
-        <button @click="setSortOrder('asc')" :class="{ active: sortOrder === 'asc' }">오래된순</button>
+      <!-- 로딩 애니메이션 -->
+      <div v-if="isLoading" class="loading-container">
+        <div class="spinner"></div>
+        <p>메시지를 불러오는 중입니다...</p>
       </div>
-      <transition-group name="card-list" tag="div" class="messages-grid">
-        <div v-for="message in sortedMessages" :key="message.id" class="message-card" :class="{ pinned: message.id === pinnedMessageId }">
-          <div class="card-header">
-            <strong>{{ message.author }}</strong>
-            <div class="header-controls">
-              <span v-if="message.id === pinnedMessageId" class="pinned-icon" title="가장 많은 좋아요를 받은 메시지입니다.">📌</span>
-              <span class="timestamp">{{ formatTimestamp(message.modifiedAt || message.createdAt) }}</span>
-              <button @click="editMessage(message)" class="edit-button" title="수정하기">✏️</button>
-              <button @click="deleteMessage(message.id)" class="delete-button" title="삭제하기">×</button>
+
+      <!-- 메시지 목록 (로딩 완료 후 표시) -->
+      <div v-else>
+        <div class="sort-buttons">
+          <button @click="setSortOrder('desc')" :class="{ active: sortOrder === 'desc' }">최신순</button>
+          <button @click="setSortOrder('asc')" :class="{ active: sortOrder === 'asc' }">오래된순</button>
+        </div>
+        <div v-if="messages.length > 0">
+          <transition-group name="card-list" tag="div" class="messages-grid">
+            <div v-for="message in displayedMessages" :key="message.id" class="message-card" :class="{ pinned: message.id === pinnedMessageId }">
+              <div class="card-header">
+                <strong>{{ message.author }}</strong>
+                <div class="header-controls">
+                  <span v-if="message.id === pinnedMessageId" class="pinned-icon" title="가장 많은 좋아요를 받은 메시지입니다.">📌</span>
+                  <span class="timestamp">{{ formatTimestamp(message.modifiedAt || message.createdAt) }}</span>
+                  <button @click="editMessage(message)" class="edit-button" title="수정하기">✏️</button>
+                  <button @click="deleteMessage(message.id)" class="delete-button" title="삭제하기">×</button>
+                </div>
+              </div>
+              <p class="card-body">{{ message.message }}</p>
+              <div class="card-footer">
+                <button @click="likeMessage(message)" class="like-button" :title="`${message.likes || 0}명이 좋아합니다`">
+                  ❤️ <span class="like-count">{{ message.likes || 0 }}</span>
+                </button>
+              </div>
             </div>
-          </div>
-          <p class="card-body">{{ message.message }}</p>
-          <div class="card-footer">
-            <button @click="likeMessage(message)" class="like-button" :title="`${message.likes || 0}명이 좋아합니다`">
-              ❤️ <span class="like-count">{{ message.likes || 0 }}</span>
-            </button>
+          </transition-group>
+          <div v-if="hasMoreMessages" class="load-more-container">
+            <button @click="loadMoreMessages" class="load-more-button">더보기</button>
           </div>
         </div>
-      </transition-group>
+        <div v-else class="no-messages">
+          <p>아직 남겨진 축하 메시지가 없어요. 😢<br>첫 번째 메시지를 남겨주세요!</p>
+        </div>
+      </div>
     </div>
 
     <!-- Action Modal -->
@@ -57,7 +75,8 @@
           
           <div class="form-group" v-if="modalAction === 'edit'">
             <label for="edit-message">메시지:</label>
-            <textarea id="edit-message" v-model="editedMessage" required></textarea>
+            <textarea id="edit-message" v-model="editedMessage" required maxlength="300"></textarea>
+            <div class="char-counter">{{ editedMessage.length }} / 300</div>
           </div>
           
           <div class="form-group">
@@ -66,7 +85,7 @@
           </div>
           
           <div class="modal-buttons">
-            <button @click="handleModalConfirm" class="modal-confirm-button">확인</button>
+            <button @click="handleModalConfirm" class="modal-confirm-button" :disabled="isModalConfirmDisabled">확인</button>
             <button @click="closeModal" class="modal-cancel-button">취소</button>
           </div>
         </div>
@@ -84,6 +103,12 @@ const newAuthor = ref('');
 const newMessage = ref('');
 const newPassword = ref('');
 const sortOrder = ref('desc'); // 'desc' for newest, 'asc' for oldest
+const isLoading = ref(true); // 로딩 상태 추가
+
+// Pagination state
+const initialDisplayCount = 10;
+const loadMoreCount = 10;
+const visibleCount = ref(initialDisplayCount);
 
 // Modal state
 const isModalOpen = ref(false);
@@ -92,13 +117,30 @@ const currentMessage = ref(null);
 const inputPassword = ref('');
 const editedMessage = ref('');
 
+const isModalConfirmDisabled = computed(() => {
+  if (modalAction.value === 'edit') {
+    if (!currentMessage.value) return true;
+    // 수정 모드: 메시지가 비어있거나, 기존과 동일하거나, 비밀번호가 없으면 비활성화
+    const originalMessage = currentMessage.value.message || '';
+    return !editedMessage.value.trim() || editedMessage.value === originalMessage || !inputPassword.value.trim();
+  }
+  if (modalAction.value === 'delete') {
+    // 삭제 모드: 비밀번호가 없으면 비활성화
+    return !inputPassword.value.trim();
+  }
+  return false; // 그 외의 경우 (이론상 발생하지 않음)
+});
+
 const fetchMessages = async () => {
+  isLoading.value = true;
   try {
     const response = await guestbookService.getMessages();
     messages.value = response.data;
   } catch (error) {
     console.error('메시지를 불러오는 데 실패했습니다:', error);
     alert('메시지 목록을 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+  } finally {
+    isLoading.value = false;
   }
 };
 
@@ -149,13 +191,26 @@ const sortedMessages = computed(() => {
   return otherMessages;
 });
 
+const displayedMessages = computed(() => {
+  return sortedMessages.value.slice(0, visibleCount.value);
+});
+
+const hasMoreMessages = computed(() => {
+  return visibleCount.value < sortedMessages.value.length;
+});
+
 const setSortOrder = (order) => {
   sortOrder.value = order;
+  visibleCount.value = initialDisplayCount; // 정렬 순서 변경 시 목록을 처음부터 보여주기 위해 초기화
 };
 
 const addMessage = async () => {
   if (!newAuthor.value.trim() || !newMessage.value.trim() || !newPassword.value.trim()) {
     alert('이름, 메시지, 비밀번호를 모두 입력해주세요.');
+    return;
+  }
+  if (newMessage.value.length > 300) {
+    alert('메시지는 300자를 초과할 수 없습니다.');
     return;
   }
   try {
@@ -187,6 +242,10 @@ const likeMessage = async (messageToLike) => {
     console.error('좋아요를 추가하는 데 실패했습니다:', error);
     alert('좋아요 처리에 실패했습니다. 잠시 후 다시 시도해주세요.');
   }
+};
+
+const loadMoreMessages = () => {
+  visibleCount.value += loadMoreCount;
 };
 
 const deleteMessage = (id) => {
@@ -221,6 +280,10 @@ const handleModalConfirm = async () => {
   if (modalAction.value === 'edit') {
     if (!editedMessage.value.trim()) {
       alert('메시지를 입력해주세요.');
+      return;
+    }
+    if (editedMessage.value.length > 300) {
+      alert('메시지는 300자를 초과할 수 없습니다.');
       return;
     }
     try {
@@ -355,6 +418,12 @@ h3 {
   font-weight: bold;
   color: #555;
 }
+.char-counter {
+  text-align: right;
+  font-size: 0.8rem;
+  color: #999;
+  margin-top: 0.25rem;
+}
 input, textarea {
   width: 100%;
   padding: 1rem;
@@ -450,6 +519,59 @@ button[type="submit"]:hover {
   transform: translateY(-8px);
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
 }
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 4rem 0;
+  color: #555;
+  font-weight: bold;
+}
+
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border-left-color: #e962b1;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1.5rem;
+}
+
+.no-messages {
+  padding: 3rem;
+  text-align: center;
+  color: #777;
+  font-size: 1.1rem;
+  line-height: 1.7;
+}
+
+.load-more-container {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.load-more-button {
+  padding: 0.8rem 2rem;
+  background: linear-gradient(45deg, #d387dd, #e962b1);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 1.1rem;
+  font-weight: 700;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.load-more-button:hover {
+  background: linear-gradient(45deg, #e962b1, #f726d4);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
 .message-card.pinned {
   border-left-color: #ffd700; /* Gold color for pinned */
   box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3);
@@ -632,6 +754,11 @@ button[type="submit"]:hover {
 .modal-confirm-button:hover {
   transform: translateY(-2px);
 }
+.modal-confirm-button:disabled {
+  background: #cccccc;
+  cursor: not-allowed;
+  transform: none;
+}
 
 .modal-cancel-button {
   background-color: #f0f0f0;
@@ -665,6 +792,12 @@ button[type="submit"]:hover {
   }
   50% {
     transform: translateY(-5px) rotate(10deg);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 

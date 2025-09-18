@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PathVariable;
 
 
 @Service
@@ -34,15 +35,16 @@ public class GuestbookService {
     }
 
     @Transactional
-    public GuestbookMessageDto.Response likeMessage(Long id) {
+    public GuestbookMessageDto.Response likeMessage(@PathVariable("id") Long id) {
         GuestbookMessage message = repository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid message Id:" + id));
         message.setLikes(message.getLikes() + 1);
-        return new GuestbookMessageDto.Response(repository.save(message));
+        // @Transactional 환경에서는 엔티티를 수정하면 자동으로 DB에 반영됩니다 (dirty checking).
+        return new GuestbookMessageDto.Response(message);
     }
 
     @Transactional
-    public GuestbookMessageDto.Response updateMessage(Long id, GuestbookMessageDto.UpdateRequest requestDto) {
+    public GuestbookMessageDto.Response updateMessage(@PathVariable("id") Long id, GuestbookMessageDto.UpdateRequest requestDto) {
         GuestbookMessage message = repository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("ID " + id + "에 해당하는 메시지를 찾을 수 없습니다."));
 
@@ -52,12 +54,12 @@ public class GuestbookService {
         }
 
         message.setMessage(requestDto.getMessage());
-        GuestbookMessage updatedMessage = repository.save(message);
-        return new GuestbookMessageDto.Response(updatedMessage);
+        // @Transactional 환경에서는 엔티티를 수정하면 자동으로 DB에 반영됩니다 (dirty checking).
+        return new GuestbookMessageDto.Response(message);
     }
 
     @Transactional
-    public void deleteMessage(Long id, String password) {
+    public void deleteMessage(@PathVariable("id") Long id, String password) {
         // 메시지가 존재하는지 확인하고, 없으면 예외를 발생시킵니다.
         GuestbookMessage message = repository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("ID " + id + "에 해당하는 메시지를 찾을 수 없습니다."));
